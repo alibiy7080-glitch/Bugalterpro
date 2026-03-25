@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>БухгалтерПро</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;
+  --accent:#2563eb;--accent-light:#eff6ff;--accent2:#059669;--accent2-light:#ecfdf5;
+  --danger:#dc2626;--danger-light:#fef2f2;--warn:#d97706;--warn-light:#fffbeb;
+  --text:#1e293b;--text2:#475569;--muted:#94a3b8;--radius:12px;
+  --shadow:0 1px 3px #0001;--shadow-md:0 4px 6px -1px #0000000d;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#dbeafe,#e0f2fe 50%,#f0fdf4);}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:380px;box-shadow:0 20px 60px #2563eb18;}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .icon{font-size:2.8rem;}
+.login-logo h1{font-size:1.6rem;font-weight:800;color:var(--accent);margin-top:8px;}
+.login-logo p{color:var(--muted);font-size:.82rem;margin-top:4px;}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px;font-weight:600;}
+.fg input,.fg select{width:100%;padding:10px 13px;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;font-family:'Inter',sans-serif;outline:none;transition:border .2s;}
+.fg input:focus,.fg select:focus{border-color:var(--accent);}
+.btn-primary{width:100%;padding:12px;background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:9px;cursor:pointer;font-size:.95rem;font-family:'Inter',sans-serif;margin-top:6px;transition:background .2s;}
+.btn-primary:hover{background:#1d4ed8;}
+#loginError{color:var(--danger);font-size:.82rem;margin-top:8px;min-height:18px;text-align:center;}
+.login-hint{text-align:center;background:var(--accent-light);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.8rem;margin-top:14px;color:var(--text2);line-height:1.6;}
+.login-hint b{color:var(--accent);}
+
+#app{display:none;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;box-shadow:var(--shadow-md);}
+.sidebar .logo{padding:20px 18px 16px;font-size:1rem;font-weight:800;color:var(--accent);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.nav-sec{padding:12px 14px 3px;font-size:.65rem;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 13px;margin:2px 8px;cursor:pointer;font-size:.87rem;color:var(--text2);font-weight:500;border-radius:9px;transition:all .15s;}
+.nav-item:hover{color:var(--accent);background:var(--accent-light);}
+.nav-item.active{color:var(--accent);background:var(--accent-light);font-weight:700;}
+.nav-item .ico{font-size:.95rem;width:18px;text-align:center;}
+.sidebar-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px;}
+.btn-sec{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 14px;cursor:pointer;width:100%;font-family:'Inter',sans-serif;font-size:.83rem;font-weight:500;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.btn-sec.danger:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-light);}
+
+.main{margin-left:220px;padding:26px 28px;min-height:100vh;}
+.page{display:none;}.page.active{display:block;}
+.ph{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.ph h2{font-size:1.3rem;font-weight:800;}
+.ph p{color:var(--muted);font-size:.8rem;margin-top:3px;}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:13px;margin-bottom:22px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);}
+.card .lbl{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;}
+.card .val{font-size:1.35rem;font-weight:800;font-family:'Fira Mono',monospace;}
+.card .val.green{color:var(--accent2);}.card .val.red{color:var(--danger);}.card .val.blue{color:var(--accent);}.card .val.yellow{color:var(--warn);}
+.card .sub{font-size:.7rem;color:var(--muted);margin-top:3px;}
+
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow);}
+.tw table{width:100%;border-collapse:collapse;}
+.tw th{background:var(--surface2);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);padding:10px 14px;text-align:left;font-weight:700;border-bottom:1px solid var(--border);}
+.tw td{padding:10px 14px;font-size:.86rem;border-top:1px solid var(--border);vertical-align:middle;}
+.tw tr:hover td{background:#f8fafc;}
+.badge{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700;}
+.bg{background:var(--accent2-light);color:var(--accent2);}
+.br{background:var(--danger-light);color:var(--danger);}
+.by{background:var(--warn-light);color:var(--warn);}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);}
+.panel h3{font-size:.9rem;font-weight:700;margin-bottom:14px;}
+
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:.84rem;transition:all .15s;display:inline-flex;align-items:center;gap:5px;}
+.bs{background:var(--accent2);color:#fff;}.bs:hover{background:#047857;}
+.bd{background:var(--danger);color:#fff;}.bd:hover{background:#b91c1c;}
+.ba{background:var(--accent);color:#fff;}.ba:hover{background:#1d4ed8;}
+.bo{background:none;border:1.5px solid var(--border2);color:var(--text2);}.bo:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+.bw{background:var(--warn);color:#fff;}.bw:hover{background:#b45309;}
+.bsm{padding:5px 10px;font-size:.76rem;}
+
+.fr{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:14px;}
+.sb{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sb h3{font-size:.95rem;font-weight:700;}
+
+#toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border-radius:10px;padding:11px 18px;font-size:.85rem;color:#fff;opacity:0;pointer-events:none;transition:opacity .3s;z-index:9999;box-shadow:0 4px 20px #0003;}
+#toast.show{opacity:1;}
+
+.mb{display:none;position:fixed;inset:0;background:#0005;z-index:1000;align-items:center;justify-content:center;}
+.mb.open{display:flex;}
+.mo{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;width:440px;max-width:95vw;box-shadow:0 20px 60px #0002;}
+.mo h3{font-size:1rem;font-weight:800;margin-bottom:16px;}
+.ma{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+.mo-sm{width:360px;}
+
+.flex{display:flex;gap:7px;align-items:center;}
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:.86rem;}
+.tmuted{color:var(--muted);}
+.tg{color:var(--accent2);font-weight:700;}
+.tr2{color:var(--danger);font-weight:700;}
+.tb{color:var(--accent);font-weight:700;}
+
+.wb{height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--border);margin-top:3px;}
+.wi{height:100%;border-radius:4px;background:var(--accent);}
+.wi.low{background:var(--danger);}.wi.mid{background:var(--warn);}
+
+/* INVOICE */
+.inv-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.inv-layout{grid-template-columns:1fr;}}
+.inv-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);position:sticky;top:20px;}
+.inv-preview>h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--text2);display:flex;align-items:center;gap:7px;}
+#invDoc{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:36px 40px;font-size:14px;color:#1e293b;min-height:600px;}
+.ih{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
+.ih h2{font-size:1.1rem;font-weight:800;color:#2563eb;}
+.ih p{font-size:.76rem;color:#64748b;margin-top:2px;}
+.ibadge{background:#2563eb;color:#fff;padding:5px 14px;border-radius:6px;font-size:.7rem;font-weight:700;}
+.inum{font-size:.86rem;font-weight:700;text-align:right;margin-top:7px;}
+.idate{font-size:.76rem;color:#64748b;text-align:right;}
+.imeta{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:13px 15px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:18px;}
+.imeta .il{font-size:.65rem;color:#94a3b8;text-transform:uppercase;font-weight:700;letter-spacing:.05em;margin-bottom:3px;}
+.imeta .iv{font-size:.88rem;font-weight:700;}
+.imeta .is{font-size:.74rem;color:#64748b;margin-top:2px;}
+.itable{width:100%;border-collapse:collapse;margin-bottom:14px;}
+.itable th{background:#2563eb;color:#fff;padding:8px 10px;font-size:.7rem;font-weight:700;text-align:left;}
+.itable th:last-child,.itable td:last-child{text-align:right;}
+.itable td{padding:8px 10px;border-bottom:1px solid #e2e8f0;font-size:.83rem;}
+.itable tr:last-child td{border-bottom:none;}
+.itable tr:nth-child(even) td{background:#f8fafc;}
+.itotals{display:flex;flex-direction:column;align-items:flex-end;gap:7px;margin-bottom:18px;}
+.idebt{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;gap:36px;min-width:240px;}
+.idebt .dl{font-size:.78rem;font-weight:600;color:#dc2626;}
+.idebt .dv{font-size:.92rem;font-weight:800;color:#dc2626;font-family:'Fira Mono',monospace;}
+.igrand{background:#2563eb;color:#fff;border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:36px;min-width:240px;}
+.igrand .gl{font-size:.78rem;font-weight:600;opacity:.85;}
+.igrand .gv{font-size:1.05rem;font-weight:800;font-family:'Fira Mono',monospace;}
+.ifooter{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding-top:16px;border-top:1px solid #e2e8f0;}
+.ifooter .sl{font-size:.68rem;color:#94a3b8;text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+.ifooter .sl2{border-bottom:1.5px solid #cbd5e1;margin-top:20px;padding-bottom:3px;font-size:.72rem;color:#94a3b8;text-align:center;}
+
+.inv-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;height:100%;}
+.ifs{padding:14px 16px;border-bottom:1px solid var(--border);}
+.ifs:last-child{border-bottom:none;}
+.ifs h4{font-size:.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px;}
+.iir{display:grid;grid-template-columns:1fr 70px 90px 24px;gap:7px;align-items:center;margin-bottom:8px;}
+.iir select,.iir input{padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;font-size:.86rem;color:var(--text);font-family:'Inter';outline:none;width:100%;}
+.iir select:focus,.iir input:focus{border-color:var(--accent);}
+.brm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:2px;border-radius:4px;line-height:1;}
+.brm:hover{color:var(--danger);}
+.dinfo{background:var(--danger-light);border:1px solid #fecaca;border-radius:7px;padding:9px 12px;font-size:.8rem;color:var(--danger);margin-bottom:9px;}
+.swarn{background:var(--warn-light);border:1px solid #fde68a;border-radius:7px;padding:6px 11px;font-size:.78rem;color:var(--warn);margin-top:3px;}
+.clist{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:16px;}
+.clist .ci{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.84rem;}
+.clist .ci:last-child{border-bottom:none;}
+
+/* SETTINGS */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:700px){.sg{grid-template-columns:1fr;}}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);}
+.sc h3{font-size:.92rem;font-weight:700;margin-bottom:16px;}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:.86rem;}
+.ir:last-child{border-bottom:none;}
+.ir .il{color:var(--muted);font-size:.78rem;}
+.ir .iv{font-weight:600;}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative;width:100%;}
+.ac-input{padding:8px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;font-size:.86rem;color:var(--text);font-family:'Inter';outline:none;width:100%;transition:border .2s;}
+.ac-input:focus{border-color:var(--accent);}
+.ac-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--surface);border:1.5px solid var(--accent);border-radius:8px;box-shadow:0 12px 32px #0004;z-index:2000;max-height:220px;overflow-y:auto;display:none;}
+.ac-drop.open{display:block;}
+.ac-item{padding:10px 14px;cursor:pointer;font-size:.86rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;transition:background .1s;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.focused{background:var(--accent-light);}
+.ac-name{font-weight:600;color:var(--text);}
+.ac-hl{color:var(--accent);font-weight:800;}
+.ac-stock{font-size:.72rem;color:var(--muted);white-space:nowrap;}
+.ac-empty{padding:10px 12px;font-size:.8rem;color:var(--muted);text-align:center;}
+/* AUTH GATE */
+.ag{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;width:370px;max-width:95vw;box-shadow:0 24px 60px #0003;}
+.ag-icon{font-size:2rem;text-align:center;margin-bottom:9px;}
+.ag h3{font-size:1rem;font-weight:800;text-align:center;margin-bottom:4px;}
+.ag-sub{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:20px;}
+.ag-err{font-size:.8rem;text-align:center;min-height:16px;margin-top:7px;}
+.ag-div{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.ag-toggle{text-align:center;font-size:.8rem;color:var(--accent);cursor:pointer;font-weight:600;margin-top:9px;}
+.ag-toggle:hover{text-decoration:underline;}
+.ag-change{display:none;}
+.ag-change.show{display:block;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">📊</div>
+      <h1>БухгалтерПро</h1>
+      <p>Система учёта материалов и клиентов</p>
+    </div>
+    <div class="fg"><label>Логин</label><input type="text" id="li" placeholder="admin" autocomplete="username"></div>
+    <div class="fg"><label>Пароль</label><input type="password" id="lp" placeholder="••••••" autocomplete="current-password"></div>
+    <button class="btn-primary" onclick="doLogin()">Войти →</button>
+    <div id="loginError"></div>
+    <div class="login-hint" id="loginHint"></div>
+    <div id="resetSection" style="display:none;margin-top:12px;text-align:center">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Забыли пароль? Сбросьте до: <b>admin / 1234</b></div>
+      <button onclick="resetCreds()" style="background:var(--danger);color:#fff;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;font-family:Inter,sans-serif;font-size:.85rem;font-weight:600;width:100%">🔄 Сбросить логин и пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="logo">📊 БухгалтерПро</div>
+    <div class="nav-sec">Учёт</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="ico">🏠</span> Главная</div>
+    <div class="nav-item" onclick="showPage('income')"><span class="ico">📥</span> Приход</div>
+    <div class="nav-item" onclick="showPage('warehouse')"><span class="ico">🏭</span> Склад</div>
+    <div class="nav-item" onclick="showPage('clients')"><span class="ico">👥</span> Клиенты</div>
+    <div class="nav-sec">Документы</div>
+    <div class="nav-item" onclick="showPage('invoice')"><span class="ico">🧾</span> Счёт-фактура</div>
+    <div class="nav-item" onclick="showPage('history')"><span class="ico">📋</span> История счетов</div>
+    <div class="sidebar-bottom">
+      <button class="btn-sec" onclick="showPage('settings')">⚙️ Настройки</button>
+      <button class="btn-sec danger" onclick="logout()">🚪 Выйти</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="ph"><div><h2>🏠 Главная панель</h2><p id="dateLabel"></p></div></div>
+      <div class="cards" id="dashCards"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div>
+          <div class="sb"><h3>Последние приходы</h3></div>
+          <div class="tw"><table><thead><tr><th>Материал</th><th>Кол-во</th><th>Сумма</th></tr></thead><tbody id="dashInc"></tbody></table></div>
+        </div>
+        <div>
+          <div class="sb"><h3>Склад</h3></div>
+          <div class="panel" id="dashWh" style="min-height:100px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOME -->
+    <div class="page" id="page-income">
+      <div class="ph"><div><h2>📥 Приход материалов</h2><p>Поступления на склад</p></div></div>
+      <div class="panel">
+        <h3>➕ Новый приход</h3>
+        <div class="fr">
+          <div class="fg"><label>Материал</label><input type="text" id="inc_name" placeholder="Цемент М400"></div>
+          <div class="fg"><label>Единица</label><select id="inc_unit"><option>кг</option><option>т</option><option>л</option><option>м²</option><option>м³</option><option>шт</option><option>упак</option><option>м</option></select></div>
+          <div class="fg"><label>Количество</label><input type="number" id="inc_qty" placeholder="0" min="0"></div>
+          <div class="fg"><label>Цена (сум)</label><input type="number" id="inc_price" placeholder="0" min="0"></div>
+          <div class="fg"><label>Дата</label><input type="date" id="inc_date"></div>
+        </div>
+        <button class="btn bs" onclick="addIncome()">+ Добавить</button>
+      </div>
+      <div class="sb"><h3>История приходов</h3><span class="tmuted" id="incTotal"></span></div>
+      <div class="tw"><table><thead><tr><th>Дата</th><th>Материал</th><th>Ед.</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th>Действия</th></tr></thead><tbody id="incomeTable"></tbody></table></div>
+    </div>
+
+    <!-- WAREHOUSE -->
+    <div class="page" id="page-warehouse">
+      <div class="ph">
+        <div><h2>🏭 Склад</h2><p>Остатки = Приход − Выдано</p></div>
+        <button class="btn bs" onclick="guardAddMat()">+ Добавить материал</button>
+      </div>
+      <div class="cards" id="whCards"></div>
+      <div class="tw"><table><thead><tr><th>Материал</th><th>Ед.</th><th>Приход</th><th>Выдано</th><th>Остаток</th><th>Стоимость</th><th>Статус</th><th>Действия</th></tr></thead><tbody id="whTable"></tbody></table></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="ph"><div><h2>👥 Клиенты</h2><p>Долги и контакты</p></div></div>
+      <div class="panel">
+        <h3>➕ Добавить клиента</h3>
+        <div class="fr">
+          <div class="fg"><label>Имя / Организация</label><input type="text" id="cl_name" placeholder="Alibiy"></div>
+          <div class="fg"><label>Телефон</label><input type="text" id="cl_phone" placeholder="+998 90 000 00 00"></div>
+          <div class="fg"><label>Адрес</label><input type="text" id="cl_addr" placeholder="г.Ташкент..."></div>
+          <div class="fg"><label>Начальный долг</label><input type="number" id="cl_debt" placeholder="0" min="0"></div>
+        </div>
+        <button class="btn bs" onclick="addClient()">+ Добавить</button>
+      </div>
+      <div class="tw"><table><thead><tr><th>Клиент</th><th>Телефон</th><th>Адрес</th><th>Долг (сум)</th><th>Статус</th><th>Действия</th></tr></thead><tbody id="clientTable"></tbody></table></div>
+    </div>
+
+    <!-- INVOICE -->
+    <div class="page" id="page-invoice">
+      <div class="ph"><div><h2>🧾 Счёт-фактура</h2><p>Материал списывается со склада при выдаче</p></div></div>
+      <div class="inv-layout">
+        <div>
+          <div class="inv-preview"><h3>👁 Предпросмотр</h3><div id="invDoc"></div></div>
+        </div>
+        <div>
+          <div class="inv-form">
+            <div class="ifs">
+              <h4>📋 Реквизиты</h4>
+              <div class="fg" style="margin-bottom:9px"><label>Номер</label><input type="text" id="inv_num" value="СФ-001" oninput="renderPreview()"></div>
+              <div class="fg" style="margin-bottom:0"><label>Дата</label><input type="date" id="inv_date" oninput="renderPreview()"></div>
+            </div>
+            <div class="ifs">
+              <h4>🧑‍💼 Покупатель</h4>
+              <div class="fg" style="margin-bottom:9px"><label>Из базы клиентов</label><select id="inv_cl" onchange="fillBuyer()"><option value="">— Выбрать —</option></select></div>
+              <div id="inv_debt_info" style="display:none" class="dinfo"></div>
+              <div class="fg" style="margin-bottom:9px"><label>Имя</label><input type="text" id="inv_bname" placeholder="Alibiy" oninput="renderPreview()"></div>
+              <div class="fg" style="margin-bottom:0"><label>Адрес</label><input type="text" id="inv_baddr" placeholder="г.Ташкент..." oninput="renderPreview()"></div>
+            </div>
+            <div class="ifs">
+              <h4>📦 Позиции</h4>
+              <div style="display:grid;grid-template-columns:1fr 70px 90px 24px;gap:7px;margin-bottom:6px">
+                <span style="font-size:.72rem;color:var(--muted);font-weight:700">🔍 Материал</span>
+                <span style="font-size:.72rem;color:var(--muted);font-weight:700">Кол-во</span>
+                <span style="font-size:.72rem;color:var(--muted);font-weight:700">Цена (сум)</span>
+                <span></span>
+              </div>
+              <div id="invItems"></div>
+              <div id="invWarns"></div>
+              <button class="btn bo bsm" style="margin-top:7px;width:100%" onclick="addInvItem()">+ Строка</button>
+            </div>
+            <div class="ifs">
+              <button class="btn ba" style="width:100%;justify-content:center;padding:11px" onclick="issueInvoice()">✅ Выдать и списать со склада</button>
+              <p style="font-size:.73rem;color:var(--muted);text-align:center;margin-top:7px">Материал вычтется из склада автоматически</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="ph"><div><h2>📋 История счетов</h2><p>Все выданные счёт-фактуры</p></div></div>
+      <div class="tw"><table><thead><tr><th>№</th><th>Дата</th><th>Покупатель</th><th>Адрес</th><th>Сумма</th><th>Итого с долгом</th><th>Действия</th></tr></thead><tbody id="histTable"></tbody></table></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="ph"><div><h2>⚙️ Настройки</h2><p>Безопасность и информация</p></div></div>
+      <div class="sg">
+        <div class="sc">
+          <h3>👤 Изменить логин</h3>
+          <div class="fg"><label>Текущий логин</label><input type="text" id="s_cl" autocomplete="off"></div>
+          <div class="fg"><label>Новый логин</label><input type="text" id="s_nl" autocomplete="off"></div>
+          <div class="fg"><label>Пароль (подтверждение)</label><input type="password" id="s_lp" autocomplete="off"></div>
+          <button class="btn ba" style="width:100%;justify-content:center" onclick="changeLogin()">💾 Сохранить логин</button>
+          <div id="s_lmsg" style="font-size:.8rem;margin-top:8px;min-height:16px;text-align:center"></div>
+        </div>
+        <div class="sc">
+          <h3>🔐 Изменить пароль</h3>
+          <div class="fg"><label>Текущий пароль</label><input type="password" id="s_cp" autocomplete="off"></div>
+          <div class="fg"><label>Новый пароль</label><input type="password" id="s_np" autocomplete="off"></div>
+          <div class="fg"><label>Повторите пароль</label><input type="password" id="s_np2" autocomplete="off"></div>
+          <button class="btn ba" style="width:100%;justify-content:center" onclick="changePass()">💾 Сохранить пароль</button>
+          <div id="s_pmsg" style="font-size:.8rem;margin-top:8px;min-height:16px;text-align:center"></div>
+        </div>
+        <div class="sc">
+          <h3>ℹ️ Информация</h3>
+          <div class="ir"><span class="il">Текущий логин</span><span class="iv" id="si_l"></span></div>
+          <div class="ir"><span class="il">Приходов</span><span class="iv" id="si_i"></span></div>
+          <div class="ir"><span class="il">Клиентов</span><span class="iv" id="si_c"></span></div>
+          <div class="ir"><span class="il">Счетов выдано</span><span class="iv" id="si_v"></span></div>
+          <div class="ir"><span class="il">Позиций на складе</span><span class="iv" id="si_w"></span></div>
+        </div>
+       
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- AUTH GATE -->
+<div class="mb" id="agModal">
+  <div class="ag">
+    <div class="ag-icon">🔐</div>
+    <h3>Подтверждение</h3>
+    <div class="ag-sub" id="agSub">Введите логин и пароль</div>
+    <div id="agMain">
+      <div class="fg"><label>Логин</label><input type="text" id="ag_l" autocomplete="off"></div>
+      <div class="fg" style="margin-bottom:0"><label>Пароль</label><input type="password" id="ag_p" autocomplete="off"></div>
+      <div class="ag-err" id="agErr"></div>
+      <div class="ma">
+        <button class="btn bo" onclick="closeM('agModal')">Отмена</button>
+        <button class="btn ba" onclick="agOK()">✅ Подтвердить</button>
+      </div>
+      <div class="ag-div"></div>
+      <div class="ag-toggle" onclick="toggleAgChange()">🔑 Изменить логин / пароль</div>
+    </div>
+    <div class="ag-change" id="agChange">
+      <div class="ag-div"></div>
+      <p style="font-size:.8rem;font-weight:700;color:var(--text2);margin-bottom:10px">Изменить данные входа</p>
+      <div class="fg"><label>Текущий логин</label><input type="text" id="agc_cl" autocomplete="off"></div>
+      <div class="fg"><label>Текущий пароль</label><input type="password" id="agc_cp" autocomplete="off"></div>
+      <div class="fg"><label>Новый логин (пусто = не менять)</label><input type="text" id="agc_nl" autocomplete="off"></div>
+      <div class="fg"><label>Новый пароль (пусто = не менять)</label><input type="password" id="agc_np" autocomplete="off"></div>
+      <div class="fg" style="margin-bottom:0"><label>Повторите новый пароль</label><input type="password" id="agc_np2" autocomplete="off"></div>
+      <div class="ag-err" id="agcErr"></div>
+      <div class="ma">
+        <button class="btn bo" onclick="toggleAgChange()">← Назад</button>
+        <button class="btn bs" onclick="agSaveCreds()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM ISSUE -->
+<div class="mb" id="confirmModal">
+  <div class="mo">
+    <h3>⚠️ Подтвердите выдачу</h3>
+    <p style="font-size:.86rem;color:var(--text2);margin-bottom:12px">Эти материалы спишутся со склада:</p>
+    <div class="clist" id="confirmList"></div>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('confirmModal')">Отмена</button>
+      <button class="btn ba" onclick="doIssue()">✅ Подтвердить + PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT INCOME -->
+<div class="mb" id="editIncModal">
+  <div class="mo mo-sm">
+    <h3>✏️ Редактировать приход</h3>
+    <input type="hidden" id="ei_id">
+    <div class="fg"><label>Материал</label><input type="text" id="ei_name"></div>
+    <div class="fg"><label>Единица</label><select id="ei_unit"><option>кг</option><option>т</option><option>л</option><option>м²</option><option>м³</option><option>шт</option><option>упак</option><option>м</option></select></div>
+    <div class="fg"><label>Количество</label><input type="number" id="ei_qty" min="0"></div>
+    <div class="fg"><label>Цена</label><input type="number" id="ei_price" min="0"></div>
+    <div class="fg"><label>Дата</label><input type="date" id="ei_date"></div>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('editIncModal')">Отмена</button>
+      <button class="btn ba" onclick="saveIncEdit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT WAREHOUSE -->
+<div class="mb" id="editWhModal">
+  <div class="mo mo-sm">
+    <h3>✏️ Редактировать материал</h3>
+    <input type="hidden" id="ew_old">
+    <div class="fg"><label>Название</label><input type="text" id="ew_name"></div>
+    <div class="fg"><label>Единица</label><select id="ew_unit"><option>кг</option><option>т</option><option>л</option><option>м²</option><option>м³</option><option>шт</option><option>упак</option><option>м</option></select></div>
+    <div class="fg"><label>Добавить к остатку</label><input type="number" id="ew_add" value="0" min="0"></div>
+    <div class="fg"><label>Цена за ед.</label><input type="number" id="ew_price" value="0" min="0"></div>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('editWhModal')">Отмена</button>
+      <button class="btn ba" onclick="saveWhEdit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MATERIAL -->
+<div class="mb" id="addMatModal">
+  <div class="mo mo-sm">
+    <h3>➕ Добавить материал</h3>
+    <div class="fg"><label>Название</label><input type="text" id="am_name" placeholder="Цемент М400"></div>
+    <div class="fg"><label>Единица</label><select id="am_unit"><option>кг</option><option>т</option><option>л</option><option>м²</option><option>м³</option><option>шт</option><option>упак</option><option>м</option></select></div>
+    <div class="fg"><label>Количество</label><input type="number" id="am_qty" placeholder="0" min="0"></div>
+    <div class="fg"><label>Цена (сум)</label><input type="number" id="am_price" placeholder="0" min="0"></div>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('addMatModal')">Отмена</button>
+      <button class="btn bs" onclick="doAddMat()">+ Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CLIENT -->
+<div class="mb" id="editClModal">
+  <div class="mo mo-sm">
+    <h3>✏️ Редактировать клиента</h3>
+    <input type="hidden" id="ec_id">
+    <div class="fg"><label>Имя</label><input type="text" id="ec_name"></div>
+    <div class="fg"><label>Телефон</label><input type="text" id="ec_phone"></div>
+    <div class="fg"><label>Адрес</label><input type="text" id="ec_addr"></div>
+    <div class="fg"><label>Долг (сум)</label><input type="number" id="ec_debt" min="0"></div>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('editClModal')">Отмена</button>
+      <button class="btn ba" onclick="saveClEdit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ЛОГИН И ПАРОЛЬ ПО УМОЛЧАНИЮ
+// Если папа открывает файл на новом компьютере —
+// всегда работает: admin / 1234
+// После смены пароля — новый сохраняется в браузере
+// ══════════════════════════════════════════
+var DEFAULT_LOGIN    = 'admin';
+var DEFAULT_PASSWORD = '1234';
+
+var CREDS = (function() {
+  try {
+    var saved = localStorage.getItem('bp_creds');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { login: DEFAULT_LOGIN, password: DEFAULT_PASSWORD };
+})();
+
+// Показать текущий логин/пароль на странице входа (после загрузки DOM)
+window.addEventListener('load', function() {
+  updateLoginHint();
+});
+
+var incomes  = (function(){ try{ var d=localStorage.getItem('bp_inc');  return d?JSON.parse(d):[]; }catch(e){return [];} })();
+var clients  = (function(){ try{ var d=localStorage.getItem('bp_cli');  return d?JSON.parse(d):[]; }catch(e){return [];} })();
+var invoices = (function(){ try{ var d=localStorage.getItem('bp_inv');  return d?JSON.parse(d):[]; }catch(e){return [];} })();
+
+var invItems    = [{mat:'',qty:1,price:0}];
+var selClientId = '';
+var agCB        = null;
+
+function saveAll() {
+  try {
+    localStorage.setItem('bp_creds', JSON.stringify(CREDS));
+    localStorage.setItem('bp_inc',   JSON.stringify(incomes));
+    localStorage.setItem('bp_cli',   JSON.stringify(clients));
+    localStorage.setItem('bp_inv',   JSON.stringify(invoices));
+  } catch(e) { alert('Ошибка сохранения: ' + e.message); }
+}
+
+// ══ УТИЛИТЫ ══
+function fmt(n) { return Number(n||0).toLocaleString('ru-RU'); }
+function fd(d)  { return d ? new Date(d).toLocaleDateString('ru-RU') : ''; }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
+function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
+
+function toast(msg, ok) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = (ok === false) ? '#dc2626' : '#1e293b';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+function openM(id)  { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══ АВТОРИЗАЦИЯ ══
+var failCount = 0;
+
+function updateLoginHint() {
+  var hint = document.getElementById('loginHint');
+  if (hint) hint.innerHTML = 'Логин: <b>' + CREDS.login + '</b> &nbsp;|&nbsp; Пароль: <b>' + CREDS.password + '</b>';
+}
+
+function resetCreds() {
+  if (!confirm('Сбросить логин и пароль до: admin / 1234?')) return;
+  CREDS.login    = 'admin';
+  CREDS.password = '1234';
+  saveAll();
+  failCount = 0;
+  document.getElementById('resetSection').style.display = 'none';
+  document.getElementById('loginError').textContent = '';
+  updateLoginHint();
+  sv('li', 'admin');
+  sv('lp', '1234');
+  alert('✅ Готово! Логин: admin  Пароль: 1234');
+}
+
+function doLogin() {
+  var l = gv('li').trim();
+  var p = gv('lp');
+  document.getElementById('loginError').textContent = '';
+  if (l === CREDS.login && p === CREDS.password) {
+    failCount = 0;
+    document.getElementById('resetSection').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    init();
+  } else {
+    failCount++;
+    document.getElementById('loginError').textContent = '❌ Неверный логин или пароль';
+    // После 2 неудачных попыток — показываем кнопку сброса
+    if (failCount >= 2) {
+      document.getElementById('resetSection').style.display = 'block';
+    }
+  }
+}
+document.getElementById('lp').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('li').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('lp').focus();
+});
+
+function logout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  sv('li',''); sv('lp','');
+  document.getElementById('loginError').textContent = '';
+}
+
+// ══ AUTH GATE ══
+function requireAuth(label, callback) {
+  agCB = callback;
+  document.getElementById('agSub').textContent = label;
+  sv('ag_l',''); sv('ag_p','');
+  document.getElementById('agErr').textContent = '';
+  document.getElementById('agChange').classList.remove('show');
+  openM('agModal');
+  setTimeout(function(){ document.getElementById('ag_l').focus(); }, 80);
+}
+
+function agOK() {
+  var l = gv('ag_l').trim();
+  var p = gv('ag_p');
+  if (l === CREDS.login && p === CREDS.password) {
+    closeM('agModal');
+    if (agCB) { var cb = agCB; agCB = null; cb(); }
+  } else {
+    var err = document.getElementById('agErr');
+    err.style.color = 'var(--danger)';
+    err.textContent = '❌ Неверный логин или пароль';
+    sv('ag_p','');
+  }
+}
+document.getElementById('ag_p').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') agOK();
+});
+
+function toggleAgChange() {
+  document.getElementById('agChange').classList.toggle('show');
+  document.getElementById('agcErr').textContent = '';
+  ['agc_cl','agc_cp','agc_nl','agc_np','agc_np2'].forEach(function(id){ sv(id,''); });
+}
+
+function agSaveCreds() {
+  var cl = gv('agc_cl').trim();
+  var cp = gv('agc_cp');
+  var nl = gv('agc_nl').trim();
+  var np = gv('agc_np');
+  var np2= gv('agc_np2');
+  var err = document.getElementById('agcErr');
+  if (cl !== CREDS.login || cp !== CREDS.password) {
+    err.style.color = 'var(--danger)';
+    err.textContent = '❌ Неверный текущий логин или пароль';
+    return;
+  }
+  if (np && np !== np2) {
+    err.style.color = 'var(--danger)';
+    err.textContent = '❌ Новые пароли не совпадают';
+    return;
+  }
+  if (nl) CREDS.login = nl;
+  if (np) CREDS.password = np;
+  saveAll();
+  err.style.color = 'var(--accent2)';
+  err.textContent = '✅ Сохранено! Логин: ' + CREDS.login;
+  ['agc_cl','agc_cp','agc_nl','agc_np','agc_np2'].forEach(function(id){ sv(id,''); });
+}
+
+// ══ СКЛАД (расчёт) ══
+function getWH() {
+  var map = {};
+  incomes.forEach(function(r) {
+    if (!map[r.name]) map[r.name] = {name:r.name, unit:r.unit, tIn:0, tOut:0, cost:0};
+    map[r.name].tIn  += +r.qty;
+    map[r.name].cost += +r.qty * +r.price;
+  });
+  invoices.forEach(function(inv) {
+    inv.items.forEach(function(it) {
+      if (!map[it.mat]) map[it.mat] = {name:it.mat, unit:'', tIn:0, tOut:0, cost:0};
+      map[it.mat].tOut += +it.qty;
+    });
+  });
+  return Object.keys(map).map(function(k) {
+    var m = map[k];
+    m.rest = m.tIn - m.tOut;
+    m.avg  = m.tIn ? m.cost / m.tIn : 0;
+    return m;
+  });
+}
+function stock(name) {
+  var wh = getWH();
+  for (var i=0; i<wh.length; i++) { if (wh[i].name === name) return wh[i].rest; }
+  return 0;
+}
+
+// ══ НАВИГАЦИЯ ══
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n) {
+    var oc = n.getAttribute('onclick') || '';
+    if (oc.indexOf("'" + id + "'") > -1) n.classList.add('active');
+  });
+  if (id==='dashboard') renderDash();
+  if (id==='income')    renderIncome();
+  if (id==='warehouse') renderWH();
+  if (id==='clients')   renderClients();
+  if (id==='invoice')   { populateInvCl(); renderInvItems(); renderPreview(); }
+  if (id==='history')   renderHistory();
+  if (id==='settings')  renderSettings();
+}
+
+// ══ ПРИХОД ══
+function addIncome() {
+  var name = gv('inc_name').trim(), unit = gv('inc_unit');
+  var qty  = parseFloat(gv('inc_qty')), price = parseFloat(gv('inc_price'));
+  var date = gv('inc_date') || today();
+  if (!name || !qty || !price) { toast('⚠️ Заполните все поля', false); return; }
+  incomes.unshift({id:uid(), name:name, unit:unit, qty:qty, price:price, date:date});
+  saveAll(); renderIncome(); toast('✅ Приход добавлен');
+  sv('inc_name',''); sv('inc_qty',''); sv('inc_price','');
+}
+
+function guardEditInc(id) {
+  requireAuth('Редактирование приходa', function() {
+    var r = null;
+    for (var i=0; i<incomes.length; i++) { if (incomes[i].id===id) { r=incomes[i]; break; } }
+    if (!r) return;
+    sv('ei_id', id); sv('ei_name', r.name); sv('ei_unit', r.unit);
+    sv('ei_qty', r.qty); sv('ei_price', r.price); sv('ei_date', r.date);
+    openM('editIncModal');
+  });
+}
+function saveIncEdit() {
+  var id = gv('ei_id');
+  var r = null;
+  for (var i=0; i<incomes.length; i++) { if (incomes[i].id===id) { r=incomes[i]; break; } }
+  if (!r) return;
+  r.name  = gv('ei_name').trim()  || r.name;
+  r.unit  = gv('ei_unit');
+  r.qty   = parseFloat(gv('ei_qty'))   || r.qty;
+  r.price = parseFloat(gv('ei_price')) || r.price;
+  r.date  = gv('ei_date') || r.date;
+  saveAll(); closeM('editIncModal'); renderIncome(); toast('✅ Обновлено');
+}
+function guardDelInc(id) {
+  requireAuth('Удаление записи прихода', function() {
+    incomes = incomes.filter(function(r){ return r.id !== id; });
+    saveAll(); renderIncome(); toast('🗑 Удалено');
+  });
+}
+
+function renderIncome() {
+  var tb = document.getElementById('incomeTable');
+  if (!incomes.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">Нет данных</td></tr>'; return; }
+  document.getElementById('incTotal').textContent = 'Итого: ' + fmt(incomes.reduce(function(s,r){ return s+r.qty*r.price; }, 0)) + ' сум';
+  tb.innerHTML = incomes.map(function(r) {
+    return '<tr><td>' + fd(r.date) + '</td><td><b>' + r.name + '</b></td><td>' + r.unit + '</td>'
+      + '<td>' + fmt(r.qty) + '</td><td>' + fmt(r.price) + '</td>'
+      + '<td class="tg">' + fmt(r.qty*r.price) + '</td>'
+      + '<td class="flex">'
+      + '<button class="btn bw bsm" onclick="guardEditInc(\'' + r.id + '\')">✏️</button>'
+      + '<button class="btn bd bsm" onclick="guardDelInc(\'' + r.id + '\')">🗑</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+// ══ СКЛАД (страница) ══
+function guardAddMat() {
+  requireAuth('Добавление материала на склад', function() {
+    sv('am_name',''); sv('am_qty',''); sv('am_price','');
+    openM('addMatModal');
+  });
+}
+function doAddMat() {
+  var name = gv('am_name').trim(), unit = gv('am_unit');
+  var qty  = parseFloat(gv('am_qty')), price = parseFloat(gv('am_price')) || 0;
+  if (!name || !qty) { toast('⚠️ Укажите название и количество', false); return; }
+  incomes.unshift({id:uid(), name:name, unit:unit, qty:qty, price:price, date:today()});
+  saveAll(); closeM('addMatModal'); renderWH(); toast('✅ Добавлено');
+}
+function guardEditWH(name) {
+  requireAuth('Редактирование материала склада', function() {
+    var wh = getWH();
+    var m = null;
+    for (var i=0; i<wh.length; i++) { if (wh[i].name===name) { m=wh[i]; break; } }
+    if (!m) return;
+    sv('ew_old', name); sv('ew_name', name);
+    for (var j=0; j<incomes.length; j++) { if (incomes[j].name===name) { sv('ew_unit', incomes[j].unit); break; } }
+    sv('ew_add', 0); sv('ew_price', Math.round(m.avg) || 0);
+    openM('editWhModal');
+  });
+}
+function saveWhEdit() {
+  var oldName = gv('ew_old'), newName = gv('ew_name').trim(), unit = gv('ew_unit');
+  var addQty = parseFloat(gv('ew_add')) || 0, price = parseFloat(gv('ew_price')) || 0;
+  if (!newName) { toast('⚠️ Введите название', false); return; }
+  incomes.forEach(function(r) { if (r.name===oldName) { r.name=newName; r.unit=unit; } });
+  if (newName !== oldName) {
+    invoices.forEach(function(inv) { inv.items.forEach(function(it) { if (it.mat===oldName) it.mat=newName; }); });
+  }
+  if (addQty > 0) incomes.unshift({id:uid(), name:newName, unit:unit, qty:addQty, price:price, date:today()});
+  saveAll(); closeM('editWhModal'); renderWH(); toast('✅ Обновлено');
+}
+function guardDelWH(name) {
+  requireAuth('Удаление материала со склада', function() {
+    if (!confirm('Удалить "' + name + '" полностью со склада?')) return;
+    incomes = incomes.filter(function(r){ return r.name !== name; });
+    saveAll(); renderWH(); toast('🗑 Удалено');
+  });
+}
+
+function renderWH() {
+  var wh   = getWH();
+  var tIn  = incomes.reduce(function(s,r){ return s+r.qty*r.price; }, 0);
+  var tOut = invoices.reduce(function(s,i){ return s+i.subtotal; }, 0);
+  var tR   = wh.reduce(function(s,m){ return s+m.rest*m.avg; }, 0);
+  document.getElementById('whCards').innerHTML =
+    '<div class="card"><div class="lbl">Всего приход</div><div class="val green">' + fmt(tIn) + '</div><div class="sub">сум</div></div>' +
+    '<div class="card"><div class="lbl">Всего выдано</div><div class="val red">' + fmt(tOut) + '</div><div class="sub">сум</div></div>' +
+    '<div class="card"><div class="lbl">Остаток (стоим.)</div><div class="val blue">' + fmt(Math.round(tR)) + '</div><div class="sub">сум</div></div>' +
+    '<div class="card"><div class="lbl">Позиций</div><div class="val yellow">' + wh.filter(function(m){ return m.rest>0; }).length + '</div></div>';
+  var tb = document.getElementById('whTable');
+  if (!wh.length) { tb.innerHTML = '<tr><td colspan="8" class="empty">Склад пуст</td></tr>'; return; }
+  tb.innerHTML = wh.map(function(m) {
+    var pct = m.tIn ? Math.round(m.rest/m.tIn*100) : 0;
+    var st  = m.rest<=0 ? '<span class="badge br">Нет</span>' : pct<25 ? '<span class="badge by">Мало</span>' : '<span class="badge bg">Есть</span>';
+    return '<tr><td><b>' + m.name + '</b></td><td>' + m.unit + '</td>'
+      + '<td class="tg">' + fmt(m.tIn) + '</td><td class="tr2">' + fmt(m.tOut) + '</td>'
+      + '<td><b>' + fmt(m.rest) + '</b></td><td>' + fmt(Math.round(m.rest*m.avg)) + '</td>'
+      + '<td>' + st + '</td>'
+      + '<td class="flex">'
+      + '<button class="btn bw bsm" onclick="guardEditWH(\'' + m.name + '\')">✏️</button>'
+      + '<button class="btn bd bsm" onclick="guardDelWH(\'' + m.name + '\')">🗑</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+// ══ КЛИЕНТЫ ══
+function addClient() {
+  var name = gv('cl_name').trim(), phone = gv('cl_phone').trim();
+  var addr = gv('cl_addr').trim(), debt  = parseFloat(gv('cl_debt')) || 0;
+  if (!name) { toast('⚠️ Введите имя', false); return; }
+  clients.unshift({id:uid(), name:name, phone:phone, addr:addr, debt:debt});
+  saveAll(); renderClients(); toast('✅ Клиент добавлен');
+  ['cl_name','cl_phone','cl_addr','cl_debt'].forEach(function(id){ sv(id,''); });
+}
+function guardEditCl(id) {
+  requireAuth('Редактирование клиента', function() {
+    var c = null;
+    for (var i=0; i<clients.length; i++) { if (clients[i].id===id) { c=clients[i]; break; } }
+    if (!c) return;
+    sv('ec_id', id); sv('ec_name', c.name); sv('ec_phone', c.phone||'');
+    sv('ec_addr', c.addr||''); sv('ec_debt', c.debt||0);
+    openM('editClModal');
+  });
+}
+function saveClEdit() {
+  var id = gv('ec_id');
+  var c = null;
+  for (var i=0; i<clients.length; i++) { if (clients[i].id===id) { c=clients[i]; break; } }
+  if (!c) return;
+  c.name  = gv('ec_name').trim() || c.name;
+  c.phone = gv('ec_phone').trim();
+  c.addr  = gv('ec_addr').trim();
+  c.debt  = parseFloat(gv('ec_debt')) || 0;
+  saveAll(); closeM('editClModal'); renderClients(); toast('✅ Обновлено');
+}
+function guardDelCl(id) {
+  requireAuth('Удаление клиента', function() {
+    clients = clients.filter(function(c){ return c.id !== id; });
+    saveAll(); renderClients(); toast('🗑 Удалено');
+  });
+}
+function guardPayDebt(id) {
+  requireAuth('Оплата долга клиента', function() {
+    var amount = parseFloat(prompt('Сумма оплаты (сум):'));
+    if (!amount || isNaN(amount)) return;
+    for (var i=0; i<clients.length; i++) {
+      if (clients[i].id===id) { clients[i].debt = Math.max(0, +clients[i].debt - amount); break; }
+    }
+    saveAll(); renderClients(); toast('💰 Оплата принята');
+  });
+}
+function renderClients() {
+  var tb = document.getElementById('clientTable');
+  if (!clients.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Нет клиентов</td></tr>'; return; }
+  tb.innerHTML = clients.map(function(c) {
+    var debt = +c.debt || 0;
+    var st = debt<=0 ? '<span class="badge bg">Чисто</span>' : '<span class="badge br">Долг</span>';
+    return '<tr><td><b>' + c.name + '</b></td><td>' + (c.phone||'—') + '</td><td>' + (c.addr||'—') + '</td>'
+      + '<td style="color:' + (debt>0?'var(--danger)':'var(--accent2)') + ';font-weight:700">' + fmt(debt) + '</td>'
+      + '<td>' + st + '</td>'
+      + '<td class="flex">'
+      + (debt>0 ? '<button class="btn bs bsm" onclick="guardPayDebt(\'' + c.id + '\')">💰</button>' : '')
+      + '<button class="btn bw bsm" onclick="guardEditCl(\'' + c.id + '\')">✏️</button>'
+      + '<button class="btn bd bsm" onclick="guardDelCl(\'' + c.id + '\')">🗑</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+// ══ СЧЁТ-ФАКТУРА ══
+function populateInvCl() {
+  document.getElementById('inv_cl').innerHTML = '<option value="">— Выбрать —</option>' +
+    clients.map(function(c) {
+      return '<option value="' + c.id + '">' + c.name + (+c.debt>0 ? ' (долг: '+fmt(+c.debt)+' сум)' : '') + '</option>';
+    }).join('');
+}
+function fillBuyer() {
+  var id = gv('inv_cl');
+  selClientId = id;
+  var di = document.getElementById('inv_debt_info');
+  if (!id) { di.style.display='none'; renderPreview(); return; }
+  var c = null;
+  for (var i=0; i<clients.length; i++) { if (clients[i].id===id) { c=clients[i]; break; } }
+  if (!c) return;
+  sv('inv_bname', c.name); sv('inv_baddr', c.addr||'');
+  var debt = +c.debt || 0;
+  if (debt > 0) { di.style.display='block'; di.textContent='⚠️ Долг клиента: '+fmt(debt)+' сум — будет добавлен к итогу'; }
+  else di.style.display = 'none';
+  renderPreview();
+}
+// ══ AUTOCOMPLETE для материалов ══
+function addInvItem() { invItems.push({mat:'',qty:1,price:0}); renderInvItems(); }
+function removeInvItem(i) {
+  if (invItems.length<=1) return;
+  invItems.splice(i,1);
+  renderInvItems(); renderPreview();
+}
+
+// Показать/скрыть выпадающий список
+function acShow(i) {
+  var drop = document.getElementById('ac-drop-'+i);
+  if (drop) drop.classList.add('open');
+}
+function acHide(i) {
+  setTimeout(function(){
+    var drop = document.getElementById('ac-drop-'+i);
+    if (drop) drop.classList.remove('open');
+  }, 180);
+}
+
+// Фильтровать список по введённым буквам
+function acFilter(i, val) {
+  invItems[i].mat = val;
+  var drop = document.getElementById('ac-drop-'+i);
+  if (!drop) return;
+  var wh = getWH().filter(function(m){ return m.rest>0; });
+  var q  = val.trim().toLowerCase();
+  var filtered = q
+    ? wh.filter(function(m){ return m.name.toLowerCase().indexOf(q) === 0; })
+    : wh;
+  if (!filtered.length) {
+    drop.innerHTML = '<div class="ac-empty">Ничего не найдено</div>';
+  } else {
+    drop.innerHTML = filtered.map(function(m) {
+      var hl = q
+        ? '<span class="ac-hl">'+m.name.slice(0,q.length)+'</span>'+m.name.slice(q.length)
+        : m.name;
+      var div = '<div class="ac-item" data-idx="'+i+'" data-name="'+m.name.replace(/"/g,'&quot;')+'" onmousedown="acSelect(this)">'
+        + '<span class="ac-name">'+hl+'</span>'
+        + '<span class="ac-stock">'+fmt(m.rest)+' '+m.unit+'</span>'
+        + '</div>';
+      return div;
+    }).join('');
+  }
+  drop.classList.add('open');
+  renderPreview(); checkWarns();
+}
+
+// Выбрать материал из списка
+function acSelect(el) {
+  var i    = parseInt(el.getAttribute('data-idx'));
+  var name = el.getAttribute('data-name');
+  invItems[i].mat = name;
+  var inp = document.getElementById('ac-inp-'+i);
+  if (inp) inp.value = name;
+  var drop = document.getElementById('ac-drop-'+i);
+  if (drop) drop.classList.remove('open');
+  var wh = getWH();
+  for (var j=0; j<wh.length; j++) {
+    if (wh[j].name===name && wh[j].avg>0) {
+      invItems[i].price = Math.round(wh[j].avg);
+      var row = document.getElementById('invItems').children[i];
+      if (row) { var pi=row.querySelector('.pi'); if(pi) pi.value=invItems[i].price; }
+      break;
+    }
+  }
+  renderPreview(); checkWarns();
+}
+
+function checkWarns() {
+  var warns = [];
+  invItems.forEach(function(it) {
+    if (!it.mat) return;
+    var s = stock(it.mat);
+    if (it.qty > s) warns.push('<b>'+it.mat+'</b>: запрошено '+fmt(it.qty)+', на складе '+fmt(s));
+  });
+  document.getElementById('invWarns').innerHTML = warns.map(function(w){
+    return '<div class="swarn">⚠️ '+w+'</div>';
+  }).join('');
+}
+
+function renderInvItems() {
+  document.getElementById('invItems').innerHTML = invItems.map(function(it,i) {
+    return '<div class="iir">'
+      + '<div class="ac-wrap">'
+      +   '<input id="ac-inp-'+i+'" class="ac-input" type="text" value="'+it.mat+'" placeholder="Начните вводить..." autocomplete="off"'
+      +   ' oninput="acFilter('+i+',this.value)"'
+      +   ' onfocus="acFilter('+i+',this.value)"'
+      +   ' onblur="acHide('+i+')">'
+      +   '<div id="ac-drop-'+i+'" class="ac-drop"></div>'
+      + '</div>'
+      + '<input type="number" value="'+it.qty+'" min="0" oninput="invItems['+i+'].qty=+this.value;renderPreview();checkWarns()">'
+      + '<input class="pi" type="number" value="'+it.price+'" min="0" oninput="invItems['+i+'].price=+this.value;renderPreview()">'
+      + '<button class="brm" onclick="removeInvItem('+i+')">✕</button>'
+      + '</div>';
+  }).join('');
+}
+function getInvData() {
+  var sub = invItems.reduce(function(s,it){ return s+it.qty*it.price; }, 0);
+  var c   = null;
+  if (selClientId) { for (var i=0;i<clients.length;i++) { if (clients[i].id===selClientId){c=clients[i];break;} } }
+  var pDebt = c ? (+c.debt||0) : 0;
+  return {
+    number: gv('inv_num') || 'СФ-001',
+    date:   gv('inv_date') || today(),
+    dateD:  fd(gv('inv_date') || today()),
+    subtotal: sub, prevDebt: pDebt, grandTotal: sub+pDebt,
+    seller: 'Bekmurza', clientId: selClientId,
+    buyer:  {name: gv('inv_bname'), addr: gv('inv_baddr')},
+    items:  invItems.map(function(it){ return {mat:it.mat,qty:it.qty,price:it.price}; })
+  };
+}
+function renderPreview() {
+  var d = getInvData();
+  var debtRow = d.prevDebt>0
+    ? '<div style="display:flex;justify-content:flex-end;margin-bottom:7px"><div class="idebt"><span class="dl">Предыдущий долг:</span><span class="dv">'+fmt(Math.round(d.prevDebt))+' сум</span></div></div>'
+    : '';
+  document.getElementById('invDoc').innerHTML =
+    '<div class="ih"><div><h2>'+d.seller+'</h2><p>Продавец / Sotuvchi</p></div>'
+    +'<div style="text-align:right"><div class="ibadge">СЧЁТ-ФАКТУРА</div><div class="inum">№ '+d.number+'</div><div class="idate">от '+d.dateD+'</div></div></div>'
+    +'<div class="imeta"><div><div class="il">Продавец</div><div class="iv">'+d.seller+'</div></div>'
+    +'<div><div class="il">Покупатель</div><div class="iv">'+(d.buyer.name||'—')+'</div>'+(d.buyer.addr?'<div class="is">'+d.buyer.addr+'</div>':'')+'</div></div>'
+    +'<table class="itable"><thead><tr><th>#</th><th>Материал</th><th>Кол-во</th><th>Цена (сум)</th><th>Сумма (сум)</th></tr></thead><tbody>'
+    + d.items.map(function(it,i){
+        return '<tr><td style="color:#94a3b8">'+(i+1)+'</td><td>'+(it.mat||'—')+'</td><td>'+fmt(it.qty)+'</td><td>'+fmt(it.price)+'</td><td><b>'+fmt(it.qty*it.price)+'</b></td></tr>';
+      }).join('')
+    +'</tbody></table>'
+    +'<div class="itotals">'+debtRow
+    +'<div class="igrand"><span class="gl">'+(d.prevDebt>0?'ИТОГО С ДОЛГОМ:':'ИТОГО К ОПЛАТЕ:')+'</span><span class="gv">'+fmt(Math.round(d.grandTotal))+' сум</span></div></div>'
+    +'<div class="ifooter"><div><div class="sl">Продавец</div><div class="sl2">Bekmurza / Подпись</div></div>'
+    +'<div><div class="sl">Покупатель</div><div class="sl2">'+(d.buyer.name||'—')+' / Подпись</div></div></div>';
+}
+function issueInvoice() {
+  var d = getInvData();
+  if (!d.buyer.name) { toast('⚠️ Укажите покупателя', false); return; }
+  var valid = d.items.filter(function(it){ return it.mat && it.qty>0; });
+  if (!valid.length) { toast('⚠️ Добавьте позиции', false); return; }
+  for (var i=0; i<valid.length; i++) {
+    var s = stock(valid[i].mat);
+    if (valid[i].qty > s) { toast('❌ Недостаточно "'+valid[i].mat+'"! Ост: '+fmt(s), false); return; }
+  }
+  document.getElementById('confirmList').innerHTML = valid.map(function(it) {
+    return '<div class="ci"><span><b>'+it.mat+'</b></span><span>'+fmt(it.qty)+' — '+fmt(it.qty*it.price)+' сум</span></div>';
+  }).join('');
+  openM('confirmModal');
+}
+function doIssue() {
+  closeM('confirmModal');
+  var d = getInvData();
+  var valid = d.items.filter(function(it){ return it.mat && it.qty>0; });
+  var inv = {id:uid(), number:d.number, date:d.date, clientId:d.clientId,
+    clientName:d.buyer.name, clientAddr:d.buyer.addr, items:valid,
+    subtotal:d.subtotal, prevDebt:d.prevDebt, grandTotal:d.grandTotal};
+  invoices.unshift(inv);
+  if (d.clientId) {
+    for (var i=0; i<clients.length; i++) {
+      if (clients[i].id===d.clientId) { clients[i].debt = (+clients[i].debt||0) + d.subtotal; break; }
+    }
+  }
+  saveAll(); genPDF(inv); toast('✅ Выдано! Материалы списаны со склада.');
+  invItems = [{mat:'',qty:1,price:0}]; selClientId = '';
+  sv('inv_cl',''); sv('inv_bname',''); sv('inv_baddr','');
+  document.getElementById('inv_debt_info').style.display='none';
+  var n = parseInt((gv('inv_num')||'0').replace(/\D/g,'')) || 0;
+  sv('inv_num', 'СФ-' + (n+1).toString().padStart(3,'0'));
+  renderInvItems(); renderPreview();
+}
+
+// ══ ИСТОРИЯ ══
+function renderHistory() {
+  var tb = document.getElementById('histTable');
+  if (!invoices.length) { tb.innerHTML='<tr><td colspan="7" class="empty">Нет выданных счетов</td></tr>'; return; }
+  tb.innerHTML = invoices.map(function(inv) {
+    return '<tr>'
+      +'<td><b>'+inv.number+'</b></td>'
+      +'<td>'+fd(inv.date)+'</td>'
+      +'<td>'+(inv.clientName||'—')+'</td>'
+      +'<td>'+(inv.clientAddr||'—')+'</td>'
+      +'<td class="tg">'+fmt(Math.round(inv.subtotal))+'</td>'
+      +'<td class="tb">'+fmt(Math.round(inv.grandTotal))+'</td>'
+      +'<td class="flex">'
++`<button class="btn ba bsm" onclick="rePDF('${inv.id}')" title="PDF">⬇ PDF</button>`
++`<button class="btn bw bsm" onclick="guardEditInv('${inv.id}')" title="Редактировать">✏️</button>`
++`<button class="btn bd bsm" onclick="guardDelInv('${inv.id}')" title="Удалить">🗑</button>`
+
+      +'</td></tr>';
+  }).join('');
+}
+function rePDF(id) {
+  for (var i=0; i<invoices.length; i++) { if (invoices[i].id===id) { genPDF(invoices[i]); return; } }
+}
+
+function guardDelInv(id) {
+  requireAuth('Удаление счёт-фактуры', function() {
+    if (!confirm('Удалить этот счёт?\nВнимание: материалы НЕ вернутся на склад.')) return;
+    invoices = invoices.filter(function(x){ return x.id !== id; });
+    saveAll(); renderHistory(); toast('🗑 Счёт удалён');
+  });
+}
+
+function guardEditInv(id) {
+  requireAuth('Редактирование счёт-фактуры', function() {
+    var inv = null;
+    for (var i=0; i<invoices.length; i++) { if (invoices[i].id===id){ inv=invoices[i]; break; } }
+    if (!inv) return;
+    sv('ei_inv_id',   id);
+    sv('ei_inv_num',  inv.number);
+    sv('ei_inv_date', inv.date);
+    sv('ei_inv_cname',inv.clientName||'');
+    sv('ei_inv_caddr',inv.clientAddr||'');
+    var st = 'padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;font-family:Inter,sans-serif;outline:none;background:var(--surface2);color:var(--text);width:100%';
+    document.getElementById('ei_inv_items').innerHTML = inv.items.map(function(it,i){
+      return '<div style="display:grid;grid-template-columns:1fr 80px 100px 28px;gap:7px;margin-bottom:8px;align-items:center">'
+        +'<input class="ei-mat" type="text" value="'+it.mat+'" placeholder="Материал" style="'+st+'">'
+        +'<input class="ei-qty" type="number" value="'+it.qty+'" min="0" style="'+st+'">'
+        +'<input class="ei-price" type="number" value="'+it.price+'" min="0" style="'+st+'">'
+        +'<button onclick="this.parentNode.remove()" style="background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;padding:6px 8px;font-size:.8rem">✕</button>'
+        +'</div>';
+    }).join('');
+    openM('editInvModal');
+  });
+}
+
+function addEiItem() {
+  var st = 'padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;font-family:Inter,sans-serif;outline:none;background:var(--surface2);color:var(--text);width:100%';
+  var div = document.createElement('div');
+  div.style = 'display:grid;grid-template-columns:1fr 80px 100px 28px;gap:7px;margin-bottom:8px;align-items:center';
+  div.innerHTML = '<input class="ei-mat" type="text" value="" placeholder="Материал" style="'+st+'">'
+    +'<input class="ei-qty" type="number" value="1" min="0" style="'+st+'">'
+    +'<input class="ei-price" type="number" value="0" min="0" style="'+st+'">'
+    +'<button onclick="this.parentNode.remove()" style="background:var(--danger);color:#fff;border:none;border-radius:6px;cursor:pointer;padding:6px 8px;font-size:.8rem">✕</button>';
+  document.getElementById('ei_inv_items').appendChild(div);
+}
+
+function saveInvEdit() {
+  var id = gv('ei_inv_id');
+  var inv = null;
+  for (var i=0; i<invoices.length; i++) { if (invoices[i].id===id){ inv=invoices[i]; break; } }
+  if (!inv) return;
+  inv.number     = gv('ei_inv_num').trim() || inv.number;
+  inv.date       = gv('ei_inv_date') || inv.date;
+  inv.clientName = gv('ei_inv_cname').trim();
+  inv.clientAddr = gv('ei_inv_caddr').trim();
+  var rows = document.getElementById('ei_inv_items').querySelectorAll('div');
+  var items = [];
+  rows.forEach(function(row) {
+    var mat   = row.querySelector('.ei-mat');
+    var qty   = row.querySelector('.ei-qty');
+    var price = row.querySelector('.ei-price');
+    if (mat && mat.value.trim()) {
+      items.push({mat:mat.value.trim(), qty:parseFloat(qty.value)||0, price:parseFloat(price.value)||0});
+    }
+  });
+  if (items.length) inv.items = items;
+  inv.subtotal   = inv.items.reduce(function(s,it){ return s+it.qty*it.price; }, 0);
+  inv.grandTotal = inv.subtotal + (inv.prevDebt||0);
+  saveAll(); closeM('editInvModal'); renderHistory(); toast('✅ Счёт обновлён');
+}
+
+// ══ ГЛАВНАЯ ══
+function renderDash() {
+  document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var tIn   = incomes.reduce(function(s,r){ return s+r.qty*r.price; }, 0);
+  var tOut  = invoices.reduce(function(s,i){ return s+i.subtotal; }, 0);
+  var tDebt = clients.reduce(function(s,c){ return s+(+c.debt||0); }, 0);
+  var wh    = getWH();
+  document.getElementById('dashCards').innerHTML =
+    '<div class="card"><div class="lbl">Общий приход</div><div class="val green">'+fmt(tIn)+'</div><div class="sub">сум</div></div>'+
+    '<div class="card"><div class="lbl">Всего выдано</div><div class="val red">'+fmt(tOut)+'</div><div class="sub">сум</div></div>'+
+    '<div class="card"><div class="lbl">Долг клиентов</div><div class="val yellow">'+fmt(tDebt)+'</div><div class="sub">сум</div></div>'+
+    '<div class="card"><div class="lbl">Клиентов</div><div class="val blue">'+clients.length+'</div></div>'+
+    '<div class="card"><div class="lbl">Счетов выдано</div><div class="val blue">'+invoices.length+'</div></div>'+
+    '<div class="card"><div class="lbl">Позиций склад</div><div class="val green">'+wh.filter(function(m){return m.rest>0;}).length+'</div></div>';
+  var li = incomes.slice(0,5);
+  document.getElementById('dashInc').innerHTML = li.length
+    ? li.map(function(r){ return '<tr><td>'+r.name+'</td><td>'+fmt(r.qty)+' '+r.unit+'</td><td class="tg">'+fmt(r.qty*r.price)+'</td></tr>'; }).join('')
+    : '<tr><td colspan="3" class="empty">Нет данных</td></tr>';
+  document.getElementById('dashWh').innerHTML = wh.length
+    ? wh.slice(0,6).map(function(m) {
+        var pct = m.tIn ? Math.round(m.rest/m.tIn*100) : 0;
+        var cls = pct<25 ? 'low' : pct<60 ? 'mid' : '';
+        return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;margin-bottom:3px">'
+          +'<span>'+m.name+'</span><span>'+fmt(m.rest)+' '+m.unit+'</span></div>'
+          +'<div class="wb"><div class="wi '+cls+'" style="width:'+pct+'%"></div></div></div>';
+      }).join('')
+    : '<p class="tmuted" style="text-align:center;padding:18px">Склад пуст</p>';
+}
+
+// ══ НАСТРОЙКИ ══
+function renderSettings() {
+  var wh = getWH();
+  document.getElementById('si_l').textContent = CREDS.login;
+  document.getElementById('si_i').textContent = incomes.length;
+  document.getElementById('si_c').textContent = clients.length;
+  document.getElementById('si_v').textContent = invoices.length;
+  document.getElementById('si_w').textContent = wh.filter(function(m){return m.rest>0;}).length;
+  document.getElementById('s_lmsg').textContent = '';
+  document.getElementById('s_pmsg').textContent = '';
+}
+function changeLogin() {
+  var cur = gv('s_cl').trim(), nw = gv('s_nl').trim(), pass = gv('s_lp');
+  var msg = document.getElementById('s_lmsg');
+  if (cur !== CREDS.login) { msg.style.color='var(--danger)'; msg.textContent='❌ Неверный текущий логин'; return; }
+  if (pass !== CREDS.password) { msg.style.color='var(--danger)'; msg.textContent='❌ Неверный пароль'; return; }
+  if (!nw) { msg.style.color='var(--danger)'; msg.textContent='❌ Введите новый логин'; return; }
+  CREDS.login = nw; saveAll();
+  msg.style.color='var(--accent2)'; msg.textContent='✅ Логин изменён: '+nw;
+  sv('s_cl',''); sv('s_nl',''); sv('s_lp','');
+  document.getElementById('si_l').textContent = CREDS.login;
+}
+function changePass() {
+  var cur = gv('s_cp'), nw = gv('s_np'), nw2 = gv('s_np2');
+  var msg = document.getElementById('s_pmsg');
+  if (cur !== CREDS.password) { msg.style.color='var(--danger)'; msg.textContent='❌ Неверный пароль'; return; }
+  if (!nw) { msg.style.color='var(--danger)'; msg.textContent='❌ Введите новый пароль'; return; }
+  if (nw !== nw2) { msg.style.color='var(--danger)'; msg.textContent='❌ Пароли не совпадают'; return; }
+  CREDS.password = nw; saveAll();
+  msg.style.color='var(--accent2)'; msg.textContent='✅ Пароль изменён!';
+  sv('s_cp',''); sv('s_np',''); sv('s_np2','');
+}
+function clearAll() {
+  if (!confirm('Удалить ВСЕ данные? Это нельзя отменить!')) return;
+  if (!confirm('Последнее предупреждение!')) return;
+  incomes=[]; clients=[]; invoices=[];
+  saveAll(); renderSettings(); toast('🗑 Данные очищены');
+}
+
+// ══ PDF ══
+function genPDF(inv) {
+  if (!inv) return;
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  var W=210, M=18;
+  var BLUE=[37,99,235], DARK=[30,41,59], GRAY=[100,116,139], LIGHT=[248,250,252], WHITE=[255,255,255], RED=[220,38,38];
+  doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]); doc.rect(0,0,W,30,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('SCHET-FAKTURA', M, 13);
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('Schet-faktura / Invoice', M, 19);
+  doc.setFontSize(10); doc.setFont('helvetica','bold');
+  doc.text('No ' + inv.number, W-M, 13, {align:'right'});
+  doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text('Data: ' + fd(inv.date), W-M, 19, {align:'right'});
+  var y = 37, half = (W-M*2)/2-3;
+  doc.setFillColor(LIGHT[0],LIGHT[1],LIGHT[2]); doc.roundedRect(M,y,half,25,3,3,'F');
+  doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('SOTUVCHI / SELLER', M+4, y+7);
+  doc.setTextColor(DARK[0],DARK[1],DARK[2]); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text('Bekmurza', M+4, y+17);
+  var bx = M+half+6;
+  doc.setFillColor(LIGHT[0],LIGHT[1],LIGHT[2]); doc.roundedRect(bx,y,half,25,3,3,'F');
+  doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('XARIDOR / BUYER', bx+4, y+7);
+  doc.setTextColor(DARK[0],DARK[1],DARK[2]); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text((inv.clientName||'—').slice(0,34), bx+4, y+14);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+  if (inv.clientAddr) doc.text(inv.clientAddr.slice(0,38), bx+4, y+20);
+  y += 32;
+  doc.autoTable({
+    startY: y,
+    head: [['#','Material','Kol-vo','Narx (sum)','Summa (sum)']],
+    body: inv.items.map(function(it,i){ return [i+1, it.mat||'—', fmt(it.qty), fmt(it.price), fmt(it.qty*it.price)]; }),
+    margin: {left:M, right:M},
+    styles: {font:'helvetica', fontSize:9, cellPadding:4, textColor:DARK},
+    headStyles: {fillColor:BLUE, textColor:WHITE, fontStyle:'bold', fontSize:8},
+    alternateRowStyles: {fillColor:LIGHT},
+    columnStyles: {0:{cellWidth:10,halign:'center'},2:{halign:'right',cellWidth:26},3:{halign:'right',cellWidth:32},4:{halign:'right',cellWidth:36,fontStyle:'bold'}}
+  });
+  y = doc.lastAutoTable.finalY + 5;
+  if (inv.prevDebt > 0) {
+    var dx = W-M-78;
+    doc.setFillColor(254,242,242); doc.roundedRect(dx,y,78,12,3,3,'F');
+    doc.setTextColor(RED[0],RED[1],RED[2]); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text('Oldingi qarz:', dx+4, y+8);
+    doc.text(fmt(Math.round(inv.prevDebt))+' sum', dx+76, y+8, {align:'right'});
+    y += 15;
+  }
+  var tx = W-M-78;
+  doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]); doc.roundedRect(tx,y,78,13,3,3,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text(inv.prevDebt>0 ? 'JAMI (QARZ BILAN):' : 'JAMI TOLOV:', tx+4, y+9);
+  doc.text(fmt(Math.round(inv.grandTotal))+' sum', tx+76, y+9, {align:'right'});
+  y += 20;
+  var sy = Math.min(y+5, 254);
+  doc.setDrawColor(GRAY[0],GRAY[1],GRAY[2]);
+  doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.line(M, sy+13, M+65, sy+13);
+  doc.text('Sotuvchi / Seller', M, sy+18);
+  doc.setFont('helvetica','bold'); doc.setTextColor(DARK[0],DARK[1],DARK[2]);
+  doc.text('Bekmurza', M, sy+23);
+  doc.setFont('helvetica','normal'); doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+  doc.line(W-M-65, sy+13, W-M, sy+13);
+  doc.text('Xaridor / Buyer', W-M-65, sy+18);
+  if (inv.clientName) { doc.setFont('helvetica','bold'); doc.setTextColor(DARK[0],DARK[1],DARK[2]); doc.text(inv.clientName.slice(0,26), W-M-65, sy+23); }
+  doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]); doc.rect(0,284,W,13,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+  doc.text('BuxgalterPro — Sotuvchi: Bekmurza', W/2, 291, {align:'center'});
+  doc.save('Schet-faktura-' + inv.number + '.pdf');
+}
+
+// ══ ЗАПУСК ══
+function init() {
+  sv('inc_date', today());
+  sv('inv_date', today());
+  renderDash();
+  renderInvItems();
+  renderPreview();
+}
+</script>
+
+<!-- EDIT INVOICE MODAL -->
+<div class="mb" id="editInvModal">
+  <div class="mo" style="width:540px;max-width:96vw">
+    <h3>✏️ Редактировать счёт-фактуру</h3>
+    <input type="hidden" id="ei_inv_id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="fg" style="margin-bottom:0"><label>Номер</label><input type="text" id="ei_inv_num"></div>
+      <div class="fg" style="margin-bottom:0"><label>Дата</label><input type="date" id="ei_inv_date"></div>
+      <div class="fg" style="margin-bottom:0"><label>Покупатель</label><input type="text" id="ei_inv_cname" placeholder="Имя"></div>
+      <div class="fg" style="margin-bottom:0"><label>Адрес</label><input type="text" id="ei_inv_caddr" placeholder="Адрес"></div>
+    </div>
+    <div style="font-size:.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">📦 Позиции</div>
+    <div style="display:grid;grid-template-columns:1fr 80px 100px 28px;gap:7px;margin-bottom:6px">
+      <span style="font-size:.7rem;color:var(--muted);font-weight:700">Материал</span>
+      <span style="font-size:.7rem;color:var(--muted);font-weight:700">Кол-во</span>
+      <span style="font-size:.7rem;color:var(--muted);font-weight:700">Цена (сум)</span>
+      <span></span>
+    </div>
+    <div id="ei_inv_items" style="max-height:220px;overflow-y:auto;padding-right:4px"></div>
+    <button class="btn bs bsm" style="margin-top:8px;width:100%;justify-content:center" onclick="addEiItem()">+ Добавить строку</button>
+    <div class="ma">
+      <button class="btn bo" onclick="closeM('editInvModal')">Отмена</button>
+      <button class="btn ba" onclick="saveInvEdit()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
